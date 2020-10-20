@@ -9,7 +9,7 @@ from pipenv.vendor import requests
 import pandas as pd
 
 
-async def get_response(session: aiohttp.ClientSession, params: Dict[str, Any]) -> Dict[str, Any]:
+async def get_response(session: aiohttp.ClientSession, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Отправка запроса
     :arg params dict параметры запроса
     :arg session сессия для запросов
@@ -36,9 +36,9 @@ async def get_items(sem: asyncio.Semaphore, session: aiohttp.ClientSession, para
         data = await get_response(session, params)
         if data:
             items.extend(data['items'])
-            if data['pages'] and False:
+            if data['pages'] and False:  # Если есть страницы, то пробегает по всем страницам
                 while data['pages'] > params['page']:
-                    items.extend(await get_items(sem, params, page=params['page'] + 1))
+                    items.extend(await get_items(sem, session, params, page=params['page'] + 1))
     return items
 
 
