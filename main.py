@@ -5,7 +5,6 @@ from typing import Dict, Any, List, Optional
 
 import aiohttp
 from dateutil import relativedelta
-from pipenv.vendor import requests
 import pandas as pd
 
 
