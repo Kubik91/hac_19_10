@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 from ast import literal_eval
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 import aiohttp
 from dateutil import relativedelta
@@ -150,7 +150,7 @@ def load_data(file_name: Optional[str] = None) -> pd.DataFrame:
     if os.path.exists(os.path.join('data', f'{file_name}.csv')):
         df = pd.read_csv(os.path.join('data', f'{file_name}.csv'))
     else:
-        df = upload_data(f'{file_name}.csv')
+        df = upload_data(file_name)
     return df
 
 
@@ -160,24 +160,61 @@ def load_details_raw_data(file_name: Optional[str] = None) -> pd.DataFrame:
     :return: DataFrame данные
     """
     file_name: str = file_name or datetime.datetime.now().isoformat()
-    if os.path.exists(os.path.join('data', f'detail_{file_name}.csv')):
+    if os.path.exists(os.path.join('data', f'detail_{file_name}.json')):
+        df: pd.DataFrame = pd.read_json(os.path.join('data', f'detail_{file_name}.json'))
+    elif os.path.exists(os.path.join('data', f'detail_{file_name}.csv')):
         df: pd.DataFrame = pd.read_csv(os.path.join('data', f'detail_{file_name}.csv'))
+        objs: List[str] = ['key_skills', 'schedule', 'experience', 'address', 'department', 'employment', 'salary',
+                           'insider_interview', 'area', 'employer', 'type', 'test', 'specializations', 'contacts',
+                           'billing_type', 'driver_license_types', 'working_days', 'working_time_intervals',
+                           'working_time_modes']
+        for obj in objs:
+            df[obj] = df[obj].apply(lambda x: literal_eval(x) if not pd.isna(x) else None)
     else:
         df: pd.DataFrame = load_data(file_name)
         loop = asyncio.get_event_loop()
-        data = loop.run_until_complete(get_detail_raw_data(list(df['id'])))
+        data = [item for item in loop.run_until_complete(get_detail_raw_data(list(df['id']))) if item]
         json.dump(data, open(os.path.join('data', f'detail_{file_name}.json'), 'w'))
-        df = pd.DataFrame([item for item in data if item])
+        df = pd.DataFrame(data)
         df.to_csv(os.path.join('data', f'detail_{file_name}.csv'))
     return df
 
 
+def clear_specializations(data: List[Dict]) -> Tuple[List, List, List, List]:
+    """
+    Обработка поля specializations
+    :param data: dict Данные поля specializations
+    :return: tuple кортеж из спискох необходимых полей
+    """
+    specializations_id: List[int] = []
+    specializations_name: List[str] = []
+    specializations_profarea_id: List[int] = []
+    specializations_profarea_name: List[str] = []
+    for dt in data:
+        specializations_id.append(int(dt['id'].replace('.', '')))
+        specializations_name.append(dt['name'])
+        specializations_profarea_id.append(int(dt['profarea_id']))
+        specializations_profarea_name.append(dt['profarea_name'])
+    return specializations_id, specializations_name, specializations_profarea_id, specializations_profarea_name
+
+
+def clear_data(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Очищаеются и подготавливаются данные
+    :param data: DataFrame данные которые необходимо обработать
+    :return: DataFrame обработанные данные
+    """
+    cleared_df = data[['id', 'key_skills', 'schedule', 'schedule', 'employment', 'salary', 'name', 'area',
+                       'specializations', 'schedule', 'experience', 'employment', 'area', 'working_days',
+                       'working_time_intervals', 'working_time_modes', 'accept_temporary']].copy()
+    # Оставляем только нужные поля
+    cleared_df['specializations_id'], cleared_df['specializations_name'],\
+    cleared_df['specializations_profarea_id'], cleared_df['specializations_profarea_name']\
+        = zip(*cleared_df['specializations'].apply(clear_specializations))  # Обрабатываем данные поля specializations
+    ...
+    return cleared_df
+
+
 if __name__ == '__main__':
-    df = load_details_raw_data('test')
-    print(df.columns)
-    df['specializations'] = df['specializations'].apply(literal_eval)
-    # df: pd.DataFrame = pd.read_csv(os.path.join('data', f'detail_5_test.csv'))
-    # print(df.columns)
-    # df[['id', 'key_skills', 'schedule', 'schedule', 'employment', 'salary', 'name', 'area', 'specializations',
-    #     'schedule', 'experience', 'employment', 'area', 'working_days', 'working_time_intervals', 'working_time_modes',
-    #     'accept_temporary']].to_csv(os.path.join('data', f'pre_detail_5_test.csv'), index=False)
+    df = load_details_raw_data('test1')
+    df = clear_data(df)
