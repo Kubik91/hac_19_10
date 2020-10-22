@@ -174,3 +174,8 @@ def load_details_raw_data(file_name: Optional[str] = None) -> pd.DataFrame:
 
 if __name__ == '__main__':
     load_details_raw_data('test')
+    # df: pd.DataFrame = pd.read_csv(os.path.join('data', f'detail_5_test.csv'))
+    # print(df.columns)
+    # df[['id', 'key_skills', 'schedule', 'schedule', 'employment', 'salary', 'name', 'area', 'specializations',
+    #     'schedule', 'experience', 'employment', 'area', 'working_days', 'working_time_intervals', 'working_time_modes',
+    #     'accept_temporary']].to_csv(os.path.join('data', f'pre_detail_5_test.csv'), index=False)
