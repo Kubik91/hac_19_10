@@ -14,4 +14,42 @@
 данные были получены с сайта https://hh.ru с помощью API.
 ### [Посмотреть код для выгрузки данных](https://github.com/Kubik91/hac_19_10/blob/main/main.py)
 ### [Посмотреть образец собранных данных](https://github.com/Kubik91/hac_19_10/blob/main/pre_detail_5_test.csv)
-### Итоговый набор данных:
+### _Структура данных (итоговый набор данных)_
+Наименование переменной | Тип переменной | Описание
+:--- | :---: | :---
+id|string | Идентификатор вакансии
+key_skills | array | Информация о ключевых навыках, заявленных в вакансии. Список может быть пустым
+key_skills\[\].name | string | Название ключевого навыка
+schedule | object | График работы
+experience | object | Требуемый опыт работы
+experience.id | string | Идентификатор требуемого опыта работы
+employment | object или null | Тип занятости
+salary	| object или null |	Оклад
+salary.from	| number или null |	Нижняя граница вилки оклада
+salary.to |	number или null | Верняя граница вилки оклада
+salary.currency	| string | Идентификатор валюты оклада (справочник currency)
+name | string | Название вакансии
+area | object | Регион размещения вакансии
+specialization | array | Специализации. Элементы справочника specializations
+specializations\[\].id | string	| Идентификатор специализации
+specializations\[\].name | string | Название специализации
+specializations\[\].profarea_id	| string | Идентификатор профессиональной области, в которую входит специализация
+specializations\[\].profarea_name | string | Название профессиональной области, в которую входит специализация
+schedule.id | string | Идентификатор графика работы
+schedule.name | string | Название графика работы
+experience.name | string | Название требуемого опыта работы
+employment.id | string | Идентификатор типа занятости
+employment.name | string | Название типа занятости
+salary.gross | boolean или null | Признак того что оклад указан до вычета налогов. В случае если не указано - null.
+area.id | string | Идентификатор региона
+area.name | string | Название региона
+working_days | object или null | Рабочие дни. Элемент справочника working_days
+working_days.id | string | Идентификатор рабочих дней
+working_days.name | string | Название рабочих дней
+working_time_intervals | object или null | Временные интервалы работы. Элемент справочника working_time_intervals
+working_time_intervals.id | string | Идентификатор временного интервала работы
+working_time_intervals.name | string | Название временного интервала работы
+working_time_modes | object или null | Режимы времени работы. Элемент справочника working_time_modes
+working_time_modes.id | string | Идентификатор режима времени работы
+working_time_modes.name | string | Название режима времени работы
+accept_temporary | boolean или null | Указание, что вакансия доступна для соискателей с временным трудоустройством
