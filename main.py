@@ -29,6 +29,11 @@ class Loader:
         if self.load is None:
             self.reset(desc=desc, total_count=total_count)
 
+    def update(self, count: int) -> None:
+        if self.load is None:
+            self.reset()
+        self.load.update(count)
+
     def reset(self, desc: str = 'Загрузка данных', total_count: Optional[int] = None) -> type(None):
         """
         Обновляет счётчик загрузки
@@ -60,9 +65,9 @@ async def get_response(sem: asyncio.Semaphore, session: aiohttp.ClientSession, u
             except aiohttp.ClientPayloadError:
                 await get_response(sem, session, url, params)  # костыль, но работает
             else:
-                Loader().load.update(1)
+                Loader().update(1)
         elif response.status == 404:
-            pass
+            Loader().update(1)
         else:
             while result is None:
                 result = await get_response(sem, session, url, params)  # костыль, но работает
@@ -216,5 +221,5 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    df = load_details_raw_data('test1')
+    df = load_details_raw_data('test2')
     df = clear_data(df)
