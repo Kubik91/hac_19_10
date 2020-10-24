@@ -242,7 +242,8 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     cleared_df = cleared_df[cleared_df['salary_from'].notna()]
     Loader().update(1)
     cleared_df = cleared_df.drop(['experience', 'schedule', 'employment', 'area', 'experience', 'working_days',
-                                  'working_time_intervals', 'working_time_modes', 'specializations', 'salary'], axis=1)
+                                  'working_time_intervals', 'working_time_modes', 'specializations', 'salary',
+                                  'archived'], axis=1)
     Loader().update(1)
     return cleared_df
 
