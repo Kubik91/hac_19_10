@@ -239,8 +239,6 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     Loader().update(1)
     cleared_df = cleared_df[cleared_df['currency'] == 'RUR']
     Loader().update(1)
-    cleared_df = cleared_df[cleared_df['salary_from'].notna()]
-    Loader().update(1)
     cleared_df = cleared_df.drop(['experience', 'schedule', 'employment', 'area', 'experience', 'working_days',
                                   'working_time_intervals', 'working_time_modes', 'specializations', 'salary',
                                   'archived'], axis=1)
