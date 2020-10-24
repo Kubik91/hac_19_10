@@ -185,7 +185,7 @@ def load_details_raw_data(file_name: Optional[str] = None) -> pd.DataFrame:
     return df
 
 
-def clear_specializations(data: List[Dict]) -> Tuple[List, List, List, List]:
+def clear_specializations(data: List[Dict]) -> Tuple[int, List, List, List, List]:
     """
     Обработка поля specializations
     :param data: dict Данные поля specializations
@@ -200,7 +200,8 @@ def clear_specializations(data: List[Dict]) -> Tuple[List, List, List, List]:
         specializations_name.append(dt['name'])
         specializations_profarea_id.append(int(dt['profarea_id']))
         specializations_profarea_name.append(dt['profarea_name'])
-    return specializations_id, specializations_name, specializations_profarea_id, specializations_profarea_name
+    return len(data), specializations_id, specializations_name, list(set(specializations_profarea_id)),\
+           list(set(specializations_profarea_name))
 
 
 def clear_data(data: pd.DataFrame) -> pd.DataFrame:
@@ -209,17 +210,65 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     :param data: DataFrame данные которые необходимо обработать
     :return: DataFrame обработанные данные
     """
-    cleared_df = data[['id', 'key_skills', 'schedule', 'schedule', 'employment', 'salary', 'name', 'area',
-                       'specializations', 'schedule', 'experience', 'employment', 'area', 'working_days',
+    Loader().reset(desc='Очистка данных', total_count=14)
+    cleared_df = data[['id', 'key_skills', 'schedule', 'salary', 'name', 'archived',
+                       'specializations', 'experience', 'employment', 'area', 'working_days',
                        'working_time_intervals', 'working_time_modes', 'accept_temporary']].copy()
+    Loader().update(1)
     # Оставляем только нужные поля
-    cleared_df['specializations_id'], cleared_df['specializations_name'],\
+    cleared_df['specializations_count'], cleared_df['specializations_id'], cleared_df['specializations_name'],\
     cleared_df['specializations_profarea_id'], cleared_df['specializations_profarea_name']\
         = zip(*cleared_df['specializations'].apply(clear_specializations))  # Обрабатываем данные поля specializations
-    ...
+    Loader().update(1)
+    for field in ['experience', 'schedule', 'employment', 'area']:
+        cleared_df[f'{field}_id'], cleared_df[f'{field}_name'] = \
+            zip(*cleared_df[field].apply(lambda s: (s.get('id'), s.get('name')) if not pd.isna(s) else (None, None)))
+        Loader().update(1)
+    for field in ['working_days', 'working_time_intervals', 'working_time_modes']:
+        cleared_df[f'{field}_count'], cleared_df[f'{field}_id'], cleared_df[f'{field}_name'] = \
+            zip(*cleared_df[field].apply(
+                lambda l: (len(l), [i.get('id') for i in l], [i.get('name') for i in l]) if not pd.isna(l) else (
+                    None, None, None)))
+        Loader().update(1)
+    cleared_df['salary_from'], cleared_df['salary_to'], cleared_df['currency'], cleared_df['gross'] = \
+        zip(*cleared_df['salary'].apply(
+            lambda s: (s.get('from'), s.get('to'), s.get('currency'), s.get('gross')) if not pd.isna(s) else (
+                None, None, None, None)))
+    Loader().update(1)
+    cleared_df = cleared_df[cleared_df['archived'] == False]
+    Loader().update(1)
+    cleared_df = cleared_df[cleared_df['currency'] == 'RUR']
+    Loader().update(1)
+    cleared_df = cleared_df[cleared_df['salary_from'].notna()]
+    Loader().update(1)
+    cleared_df = cleared_df.drop(['experience', 'schedule', 'employment', 'area', 'experience', 'working_days',
+                                  'working_time_intervals', 'working_time_modes', 'specializations', 'salary'], axis=1)
+    Loader().update(1)
     return cleared_df
 
 
+def create_date(file_name: Optional[str] = None) -> pd.DataFrame:
+    """Загружает очищенные данные из файла если есть, либо создаёт такой файл
+    :param file_name: (optional) имя файла
+    :return: DataFrame данные
+    """
+    file_name: str = file_name or datetime.datetime.now().isoformat()
+    if os.path.exists(os.path.join('data', f'finall_{file_name}.json')):
+        df: pd.DataFrame = pd.read_json(os.path.join('data', f'finall_{file_name}.json'))
+    elif os.path.exists(os.path.join('data', f'detail_{file_name}.csv')):
+        df: pd.DataFrame = pd.read_csv(os.path.join('data', f'finall_{file_name}.csv'))
+        objs: List[str] = ['specializations', 'specializations_profarea', 'working_days', 'working_time_intervals',
+                           'working_time_modes']
+        for obj in objs:
+            df[f'{obj}_id'] = df[f'{obj}_id'].apply(lambda x: literal_eval(x) if not pd.isna(x) else None)
+            df[f'{obj}_name'] = df[f'{obj}_name'].apply(lambda x: literal_eval(x) if not pd.isna(x) else None)
+    else:
+        df: pd.DataFrame = load_details_raw_data(file_name)
+        df = clear_data(df)
+        df.to_json(os.path.join('data', f'finall_{file_name}.json'))
+        df.to_csv(os.path.join('data', f'finall_{file_name}.csv'))
+    return df
+
+
 if __name__ == '__main__':
-    df = load_details_raw_data('test2')
-    df = clear_data(df)
+    df = load_details_raw_data('test')
