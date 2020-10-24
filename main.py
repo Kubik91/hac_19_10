@@ -3,9 +3,11 @@ import datetime
 import json
 import os
 from ast import literal_eval
+from collections import Counter
 from typing import Dict, Any, List, Optional, Tuple
 
 import aiohttp
+import typing
 from dateutil import relativedelta
 import pandas as pd
 from tqdm.asyncio import tqdm
@@ -210,7 +212,7 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     :param data: DataFrame данные которые необходимо обработать
     :return: DataFrame обработанные данные
     """
-    Loader().reset(desc='Очистка данных', total_count=14)
+    Loader().reset(desc='Очистка данных', total_count=15)
     cleared_df = data[['id', 'key_skills', 'schedule', 'salary', 'name', 'archived',
                        'specializations', 'experience', 'employment', 'area', 'working_days',
                        'working_time_intervals', 'working_time_modes', 'accept_temporary']].copy()
@@ -234,6 +236,9 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
         zip(*cleared_df['salary'].apply(
             lambda s: (s.get('from'), s.get('to'), s.get('currency'), s.get('gross')) if not pd.isna(s) else (
                 None, None, None, None)))
+    Loader().update(1)
+    cleared_df['key_skills_count'], cleared_df['key_skills'] = \
+        zip(*cleared_df['key_skills'].apply(lambda l: (len(l), [s.get('name') for s in l]) if l else (None, None)))
     Loader().update(1)
     cleared_df = cleared_df[cleared_df['archived'] == False]
     Loader().update(1)
@@ -269,5 +274,34 @@ def create_date(file_name: Optional[str] = None) -> pd.DataFrame:
     return df
 
 
+def show_skills(df: pd.DataFrame) -> None:
+    """
+    Вывод графика наиболее востребованных скиллов
+    :param df dataframe Данные из которых строится график
+    """
+    key_skills_all: List[str] = []
+    for row in df['key_skills']:
+        if row:
+            key_skills_all.extend(row)
+    counter_skills: typing.Counter = Counter(key_skills_all)
+    import matplotlib.pyplot as plt
+    import numpy as np
+    plt.style.use('seaborn')
+    x = [item[0] for item in counter_skills.most_common(10)]
+    y2 = [item[1] for item in counter_skills.most_common(10)]
+    fig, ax = plt.subplots()
+
+    col = np.random.rand(10, 3)
+    ax.bar(x, y2, color=col, label='Количество')
+    ax.legend()
+    plt.xlabel('Навыки')
+    plt.ylabel('Количество упоминаний')
+    plt.xticks(rotation=45)  # поворот текста в графике
+    fig.set_figheight(8)
+    fig.set_figwidth(12)
+    plt.show()
+
+
 if __name__ == '__main__':
     df = create_date('test')
+    show_skills(df)
