@@ -256,7 +256,7 @@ def create_date(file_name: Optional[str] = None) -> pd.DataFrame:
     file_name: str = file_name or datetime.datetime.now().isoformat()
     if os.path.exists(os.path.join('data', f'finall_{file_name}.json')):
         df: pd.DataFrame = pd.read_json(os.path.join('data', f'finall_{file_name}.json'))
-    elif os.path.exists(os.path.join('data', f'detail_{file_name}.csv')):
+    elif os.path.exists(os.path.join('data', f'finall_{file_name}.csv')):
         df: pd.DataFrame = pd.read_csv(os.path.join('data', f'finall_{file_name}.csv'))
         objs: List[str] = ['specializations', 'specializations_profarea', 'working_days', 'working_time_intervals',
                            'working_time_modes']
@@ -272,4 +272,4 @@ def create_date(file_name: Optional[str] = None) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    df = load_details_raw_data('test')
+    df = create_date('test')
