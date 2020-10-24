@@ -305,3 +305,4 @@ def show_skills(df: pd.DataFrame) -> None:
 if __name__ == '__main__':
     df = create_date('test')
     show_skills(df)
+    df.iloc[:6].to_csv(f'final_5_test.csv')
